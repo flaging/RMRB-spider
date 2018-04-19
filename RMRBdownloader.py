@@ -14,7 +14,7 @@ import time
 import PyPDF2
 
 '''
-This is a spider for download RMRM(China Daily) pdfs.
+This is a spider for download China Daily PDFs.
 
 '''
 
