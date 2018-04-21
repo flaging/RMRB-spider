@@ -6,45 +6,74 @@ Created on Fri Apr 13 14:08:26 2018
 """
 
 # coding=utf-8
-import requests
-import re
-import string
+
 import os
-import time
-import PyPDF2
+from PyPDF2 import PdfFileReader, PdfFileMerger, PdfFileWriter
 
+def merger_pdf(filenames, merged_name, passwords=None):
+    """
+    传进来一个文件列表，将其依次融合起来
+    :param filenames: 文件列表
+    :param passwords: 对应的密码列表
+    :return:
+    """
+    # 计算共有多少文件
+    filenums = len(filenames)
+    # 注意需要使用False 参数
+    pdf_merger = PdfFileMerger(False)
 
-def mergePDFsinDir(root, pdflist, desLocation):
-    # This is for merge all pages from same date, and save it as a single PDF.
-    # But this don't work.
-    os.chdir(root)
-    print(desLocation)
-    print(os.getcwd())
-    pdfout = open(desLocation, "wb")
-    pdfw = PyPDF2.PdfFileWriter()
-    for i in pdflist:
-        pdfFile = open(i, 'rb')
-        print('open '+i)
-        pr = PyPDF2.PdfFileReader(pdfFile)
+    for i in range(filenums):
+        # 得到密码
+        if passwords is None:
+            password = None
+        else:
+            password = passwords[i]
+        pdf_reader = get_reader(filenames[i], password)
+        if not pdf_reader:
+            return
+        # append默认添加到最后
+        pdf_merger.append(pdf_reader)
 
-        for PageNum in range(pr.numPages):
-            pdfw.addPage(pr.getPage(PageNum))
-        print(pr.pageMode)
+    pdf_merger.write(open(merged_name, 'wb'))
 
-    pdfw.write(pdfout)
-    pdfout.close()
-    pdfFile.close()
+def get_reader(filename, password):
+    try:
+        old_file = open(filename, 'rb')
+    except IOError as err:
+        print('文件打开失败！' + str(err))
+        return None
+
+    # 创建读实例
+    pdf_reader = PdfFileReader(old_file, strict=False)
+
+    # 解密操作
+    if pdf_reader.isEncrypted:
+        if password is None:
+            print('%s文件被加密，需要密码！' % filename)
+            return None
+        else:
+            if pdf_reader.decrypt(password) != 1:
+                print('%s密码不正确！' % filename)
+                return None
+    if old_file in locals():
+        old_file.close()
+    return pdf_reader
+
 
 
 def getFiles(root):
     # This is a basic func for merge PDFs.
-    for root, dirs, files in os.walk(root):
-        return root, files
+#    for root, dirs, files in os.walk(root):
+#        return root, files
+    return os.listdir(root)
 
 
 def main():
-    root, files = getFiles('E://Test//')
-    mergePDFsinDir('E://Test//', files, 'c1.pdf')
+    fileroot = 'D://MyRes//rmrb//page//2017-01//01//'
+    files = getFiles(fileroot)
+#    print(files)
+    os.chdir(fileroot)
+    merger_pdf(files, 'rmrb20170101.pdf')
     print('work down!')
 
 
