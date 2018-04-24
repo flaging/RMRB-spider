@@ -12,8 +12,7 @@ import re
 import string
 import os
 import time
-import PyPDF2
-
+from PyPDF2 import PdfFileMerger,PdfFileReader,PdfFileWriter
 
 def getHTMLText(url):
     try:
@@ -61,11 +60,11 @@ def PDFMergeFun(root,pdflist,desLocation):
     os.chdir(root)
     print(desLocation)
     pdfout=open(desLocation,"wb")
-    pdfw=PyPDF2.PdfFileWriter()
+    pdfw=PdfFileWriter()
     for i in pdflist:
         pdfFile=open(i,'rb')
         print('open '+i)
-        pr=PyPDF2.PdfFileReader(pdfFile)
+        pr=PdfFileReader(pdfFile)
         for PageNum in range(pr.numPages):
             pdfw.addPage(pr.getPage(PageNum))
 
