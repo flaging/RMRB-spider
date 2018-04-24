@@ -130,12 +130,6 @@ def get_reader(filename, password):
 
 
 
-def getFiles(root):
-    # This is a basic func for merge PDFs.
-#    for root, dirs, files in os.walk(root):
-#        return root, files
-    return os.listdir(root)
-
 def mergeAll(fileLocation):
     files = getFiles(fileLocation)
 #    print(files)
