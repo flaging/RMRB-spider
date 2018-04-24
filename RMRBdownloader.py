@@ -7,19 +7,15 @@ Created on Fri Apr 13 14:08:26 2018
 
 #coding=utf-8
 import requests
+from bs4 import BeautifulSoup
 import re
 import string
 import os
 import time
 import PyPDF2
 
-'''
-This is a spider for download China Daily PDFs.
-
-'''
 
 def getHTMLText(url):
-# url is a root url of China Daily,where we can get html code.
     try:
         kv={'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50'}
         r = requests.get(url,timeout=30,headers=kv)
@@ -30,12 +26,12 @@ def getHTMLText(url):
         return "error"
 
 def getUrl(html):
-   # This if for analysis the html page and get urls of PDFs. 
+    
     url = re.findall('/page.*?\.pdf',html)
+    print(url)
     return url
 
-def downloadUrl(url,root1):
-    # This is for download PDF pages from every url. root is the root1 location we can storage these PDFs.    
+def downloadUrl(url,root1):   
     kv={'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50'}
     for i in url:
         root=root1
@@ -53,62 +49,116 @@ def downloadUrl(url,root1):
                 with open(path,'wb') as f:
                     f.write(r.content)
                     f.close()
-                    print(str(i).split('/')[-1]+" saved success!\n")
+                    print(i+" saved success!\n")
             else:
-                print(str(i).split('/')[-1]+" already exists!\n")
+                print(i+" already exists!\n")
         except:
-            print(str(i).split('/')[-1]+" saved unsuccess!\n")
+            print(i+" saved unsuccess!\n")
         time.sleep(0.1)
+    return root
     
 def PDFMergeFun(root,pdflist,desLocation):
-    # This is for merge all pages from same date, and save it as a single PDF.
-    # But this don't work.
     os.chdir(root)
     print(desLocation)
-    print(os.getcwd())
     pdfout=open(desLocation,"wb")
     pdfw=PyPDF2.PdfFileWriter()
     for i in pdflist:
         pdfFile=open(i,'rb')
         print('open '+i)
         pr=PyPDF2.PdfFileReader(pdfFile)
-        
         for PageNum in range(pr.numPages):
             pdfw.addPage(pr.getPage(PageNum))
-        print(pr.pageMode)
 
     pdfw.write(pdfout)
     pdfout.close()
     pdfFile.close()
 
 def getFiles(root):
-    # This is a basic func for merge PDFs.
     for root,dirs,files in os.walk(root):
+#        print(root)
+#        print(dirs)
+#        print(files)
         return root,files
     
-def downloadMonthPaper():
-    # This is a inter-act function for users. now we can input the month of 2017 and download them.
-    inMonth =int(input("please input 1-12 month for download:\n"))
-    if inMonth<10:
-        month = '0'+str(inMonth)
-    else:
-        month = str(inMonth)
-    for i in range(32):
-        if i<10:
-            date = '0'+str(i)
+def merger_pdf(filenames, merged_name, passwords=None):
+    """
+    传进来一个文件列表，将其依次融合起来
+    :param filenames: 文件列表
+    :param passwords: 对应的密码列表
+    :return:
+    """
+    # 计算共有多少文件
+    filenums = len(filenames)
+    # 注意需要使用False 参数
+    pdf_merger = PdfFileMerger(False)
+
+    for i in range(filenums):
+        # 得到密码
+        if passwords is None:
+            password = None
         else:
-            date=str(i)
-                
-        rootUrl= 'http://paper.people.com.cn/rmrb/html/2017-'+month+'/'+date+'/nbs.D110000renmrb_01.htm'
-        root="D://MyRes//rmrb//"
-        html=getHTMLText(rootUrl)
-        url=getUrl(html)
-        downloadUrl(url,root)   
-    
+            password = passwords[i]
+        pdf_reader = get_reader(filenames[i], password)
+        if not pdf_reader:
+            return
+        # append默认添加到最后
+        pdf_merger.append(pdf_reader)
+
+    pdf_merger.write(open(merged_name, 'wb'))
+
+def get_reader(filename, password):
+    try:
+        old_file = open(filename, 'rb')
+    except IOError as err:
+        print('文件打开失败！' + str(err))
+        return None
+
+    # 创建读实例
+    pdf_reader = PdfFileReader(old_file, strict=False)
+
+    # 解密操作
+    if pdf_reader.isEncrypted:
+        if password is None:
+            print('%s文件被加密，需要密码！' % filename)
+            return None
+        else:
+            if pdf_reader.decrypt(password) != 1:
+                print('%s密码不正确！' % filename)
+                return None
+    if old_file in locals():
+        old_file.close()
+    return pdf_reader
+
+
+
+def getFiles(root):
+    # This is a basic func for merge PDFs.
+#    for root, dirs, files in os.walk(root):
+#        return root, files
+    return os.listdir(root)
+
+def mergeAll(fileLocation):
+    files = getFiles(fileLocation)
+#    print(files)
+    os.chdir(fileLocation)
+    merger_pdf(files, 'rmrb20170101.pdf')    
     
 
 def main():
-    downloadMonthPaper()
+
+    rootUrl= 'http://paper.people.com.cn/rmrb/html/2017-04/02/nbs.D110000renmrb_01.htm'
+    root="D://MyRes//rmrb//"
+    html=getHTMLText(rootUrl)
+    url=getUrl(html)
+    fileDestination = downloadUrl(url,root)
+    fileDestination = root+'page//2017-04//02//'
+    [root,files]=getFiles(fileDestination)
+    #print(files)
+    PDFMergeFun(root,files,'test.pdf')
+#    PDFMergeFun(pdfFile,des)
+#    
+    #PDFMergeAll(root)
+    
     print("Work done!")
 
 main()
