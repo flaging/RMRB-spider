@@ -68,13 +68,12 @@ def getFiles(root):
     return os.listdir(root)
 
 
-def main():
-    fileroot = 'D://MyRes//rmrb//page//2017-01//01//'
-    files = getFiles(fileroot)
-#    print(files)
-    os.chdir(fileroot)
-    merger_pdf(files, 'rmrb20170101.pdf')
+def main(filedir):
+    files = getFiles(filedir)
+    os.chdir(filedir)
+    print(files[1])
+    merger_pdf(files, str(files[1])[0:-6]+str(files[1])[-4:])
     print('work down!')
 
 
-main()
+main('D://MyRes//rmrb//page//2018-02//03')
