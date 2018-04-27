@@ -8,6 +8,7 @@ Created on Fri Apr 13 14:08:26 2018
 # coding=utf-8
 
 import os
+from pathlib import Path
 from PyPDF2 import PdfFileReader, PdfFileMerger, PdfFileWriter
 
 def merger_pdf(filenames, merged_name, passwords=None):
@@ -68,12 +69,29 @@ def getFiles(root):
     return os.listdir(root)
 
 
-def main(filedir):
+def mergeAll(filedir):
     files = getFiles(filedir)
     os.chdir(filedir)
     print(files[1])
     merger_pdf(files, str(files[1])[0:-6]+str(files[1])[-4:])
     print('work down!')
 
+def getSubDir(rootDir):
+#    dir1=[]
+#    for root,dirs,files in os.walk(rootDir):
+#        
+#        for name in dirs:
+#            #print(os.path.join(root, name))
+#            path1 = os.path.join(root,name)
+#            print(os.listdir(path1))
+#            if(0!=os.listdir(path1)):
+#                dir1.append(path1)
+#        # print(dir)
+#    return dir1
+    p=Path(rootDir)
+    for pi in p.iterdir():
+        print(pi)
 
-main('D://MyRes//rmrb//page//2018-02//03')
+
+# mergeAll('D://MyRes//rmrb//page//2018-02//03')
+print(getSubDir('D://MyRes//rmrb//page//'))
